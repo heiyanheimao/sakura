@@ -1,0 +1,65 @@
+<!doctype html>
+<html class="x-admin-sm">
+
+{include file="public/header" /}
+
+<body class="login-bg">
+
+	<div class="login layui-anim layui-anim-up">
+		<div class="message">正禾疗养后台登录</div>
+		<div id="darkbannerwrap"></div>
+
+		<form method="post" class="layui-form">
+			<input name="username" placeholder="账号" type="text" lay-verify="required|username" class="layui-input">
+			<hr class="hr15">
+			<input name="password" lay-verify="required|pass" placeholder="密码" type="password" class="layui-input">
+			<hr class="hr15">
+			<input value="登录" lay-submit lay-filter="login" style="width:100%;" type="submit">
+			<hr class="hr20">
+		</form>
+	</div>
+
+	<script>
+		layui.use(['form', 'jquery'], function () {
+			var form = layui.form;
+			var $ = layui.jquery;
+			//自定义验证规则
+			form.verify({
+				username: [/^[0-9A-Za-z]{4,12}$/, '账号必须由数字，大小写字母组成，4到12位'],
+				pass: [/^[0-9A-Za-z]{4,12}$/, '密码必须由数字，大小写字母组成，4到12位'],
+			});
+			//监听提交
+			form.on('submit(login)', function (data) {
+				$.ajax({
+					//请求方式
+					type: "POST",
+					//请求的媒体类型
+					dataType: "JSON",
+					//请求地址
+					url: "/back/admin/loginAjax",
+					//数据，json字符串
+					data: data.field,
+					//请求成功
+					success: function (rtn) {
+						if (rtn.code === 200) {
+							layer.msg(rtn.msg, { icon: 1, time: 1500 }, function () {
+								location.href = 'index'
+							});
+						} else {
+							layer.msg(rtn.msg, { icon: 2, time: 1500 }, function () {
+							});
+						}
+					},
+					//请求失败，包含具体的错误信息
+					error: function (e) {
+						console.log(e.status);
+						console.log(e.responseText);
+					}
+				});
+				return false;
+			});
+		});
+	</script>
+</body>
+
+</html>
