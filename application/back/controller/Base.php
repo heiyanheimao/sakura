@@ -22,6 +22,7 @@ class Base extends Controller
      */
     public static function checkRequest(Request $request)
     {
+
         if ($request->isAjax() && $request->isPost()) {
             return true;
         }
@@ -32,12 +33,20 @@ class Base extends Controller
     /**检测登录态
      * @return bool|mixed
      */
-    public function checkStatus()
+    public function getAuth(Request $request)
     {
-        if ($info = Session::get('info')) {
-            return jsonData(200, '登录态检测成功', $info);
+        if (self::checkRequest($request)) {
+            if ($info = Session::get('info')) {
+                $model = new AdminModel();
+                $rtn = $model->getAuth($info['admin_account']);
+                if (false === $rtn) return jsonData(300, '服务内部错误~');
+                if ([] == $rtn) return jsonData(401, '该用户不存在');
+                if (1 != $rtn['admin_type']) return jsonData(402, '非管理员没有操作权限');
+                return jsonData(200, '', ['admin_name' => $info['admin_name'], 'level' => $rtn['level']]);
+            }
+            return jsonData(500, '登录态失效，请重新登录');
         }
-        return jsonData(500, '登录态失效，请重新登录');
+        return jsonData(400, '非法请求');
     }
 
     /**获取登录态
@@ -64,6 +73,8 @@ class Base extends Controller
         if ([] == $rtn) return jsonData(401, '该用户不存在');
         if (1 != $rtn['admin_type']) return jsonData(402, '非管理员没有权限操作');
         if (9 != $rtn['level'] && !in_array($level, explode(',', $rtn['level']))) return jsonData(403, '您没有权限进行当前操作');
+        if (0 == $rtn['state']) return jsonData(404, '您已经被禁用无法操作');
+        if (-1 == $rtn['state']) return jsonData(404, '您已经被删除无法操作');
         return jsonData(200, '');
     }
 }
