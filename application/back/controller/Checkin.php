@@ -30,7 +30,7 @@ class Checkin extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,5);
+            $auth = self::checkAuth($info,4);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -86,7 +86,7 @@ class Checkin extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,5);
+            $auth = self::checkAuth($info,4);
             if (200 != $auth['code']) return $auth;
             //接收参数
             $input['state']     = $request->post('state');//状态变更  确认  取消
@@ -138,7 +138,7 @@ class Checkin extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,5);
+            $auth = self::checkAuth($info,4);
             if (200 != $auth['code']) return $auth;
             //接收参数
             $input['checkin_name']     = $request->post('checkin_name');//预约人名称
@@ -148,14 +148,14 @@ class Checkin extends Base
             $input['type']             = $request->post('type');//预约类型
             //参数校验
            if ($input['checkin_name'] == '' && $input['checkin_phone'] == '' && $input['checkin_time'] == '') return jsonData(401, '请至少填写一个合法数据');
-           if ($input['checkin_id'] == null) return jsonData(401, '缺少参数');
+           if ($input['checkin_id'] === null) return jsonData(401, '缺少参数');
             if (!in_array($input['type'],['1','2'],true)) return jsonData(401, '不合法的参数');
 
             //逻辑处理
             $model= new CheckinModel();
-            if ($input['checkin_name']=='') unset($input['checkin_name']);
-            if ($input['checkin_phone']=='') unset($input['checkin_phone']);
-            if ($input['checkin_time']=='') {
+            if ($input['checkin_name']==='') unset($input['checkin_name']);
+            if ($input['checkin_phone']==='') unset($input['checkin_phone']);
+            if ($input['checkin_time']==='') {
                 unset($input['checkin_time']);
             } else {
                 $input['checkin_time'] = strtotime($input['checkin_time']);

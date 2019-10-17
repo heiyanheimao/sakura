@@ -85,9 +85,9 @@ return [
     'has the same filename: {:filename}'                        => '存在同名文件：{:filename}',
     'upload illegal files'                                      => '非法上传文件',
     'illegal image files'                                       => '非法图片文件',
-    'extensions to upload is not allowed'                       => '上传文件后缀不允许',
+    'extensions to upload is not allowed,allowed:{:ext}'        => '上传文件后缀不允许,允许类型:{:ext}',
     'mimetype to upload is not allowed'                         => '上传文件MIME类型不允许！',
-    'filesize not match'                                        => '上传文件大小不符！',
+    'filesize not match maxsize {:size}'                        => '上传文件大小不符！最大值 {:size}',
     'directory {:path} creation failed'                         => '目录 {:path} 创建失败！',
 
     'The middleware must return Response instance'              => '中间件方法必须返回Response对象实例',

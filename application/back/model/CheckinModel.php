@@ -107,7 +107,6 @@ class CheckinModel
             AdminLogModel::writeLog($guy, '预约状态修改', json_encode($input), '服务内部错误~');
             return jsonData(300, '服务内部错误~');
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
             AdminLogModel::writeLog($guy, '预约状态修改', json_encode($input), '服务内部错误~');
             return jsonData(301, '服务内部错误~');
         }
@@ -149,7 +148,6 @@ class CheckinModel
             AdminLogModel::writeLog($guy, '预约信息修改', json_encode($input), '服务内部错误~');
             return jsonData(300, '服务内部错误~');
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
             AdminLogModel::writeLog($guy, '预约信息修改', json_encode($input), '服务内部错误~');
             return jsonData(301, '服务内部错误~');
         }

@@ -151,5 +151,7 @@ return [
         5 => '用户管理员',
         6 => '系统管理员',
         9 => '超级管理员'
-    ]
+    ],
+    'upload_path' => Env::get('ROOT_PATH') . 'public/static/uploads/',
+    'static_path' => Env::get('ROOT_PATH') . 'public/static/',
 ];

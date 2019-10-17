@@ -252,7 +252,7 @@ class File extends SplFileObject
         $extension = strtolower(pathinfo($this->getInfo('name'), PATHINFO_EXTENSION));
 
         if (!in_array($extension, $ext)) {
-            $this->error = 'extensions to upload is not allowed';
+            $this->error = ['extensions to upload is not allowed,allowed:{:ext}', ['ext' => $ext]];
             return false;
         }
 
@@ -301,7 +301,7 @@ class File extends SplFileObject
     public function checkSize($size)
     {
         if ($this->getSize() > (int) $size) {
-            $this->error = 'filesize not match';
+            $this->error = ['filesize not match maxsize {:size}', ['size' => $size]];
             return false;
         }
 
