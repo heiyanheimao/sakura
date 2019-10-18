@@ -51,7 +51,7 @@ class DoctorCategoryModel
         }
     }
 
-    /**获取文章列表
+    /**获取分类列表
      * @param $input
      * @return array
      */

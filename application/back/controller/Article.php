@@ -100,7 +100,9 @@ class Article extends Base
                     }
                 },
             ]);
-
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             $input['content'] = filterScript($input['content']);
             $input['category_id'] = 2;
@@ -139,7 +141,7 @@ class Article extends Base
                 'state' => function($v){
                     if (null === $v) {
                         return '缺少参数';
-                    } elseif (!in_array($v, ['0', '1'], true)) {
+                    } elseif ('' !== $v &&!in_array($v, ['0', '1'], true)) {
                         return '不合法的文章状态';
                     } else {
                         return true;
@@ -148,7 +150,7 @@ class Article extends Base
                 'is_recommend' => function($v){
                     if (null === $v) {
                         return '缺少参数';
-                    } elseif (!in_array($v, ['0', '1'], true)) {
+                    } elseif ('' !== $v &&!in_array($v, ['0', '1'], true)) {
                         return '不合法的文章推荐';
                     } else {
                         return true;
@@ -179,7 +181,9 @@ class Article extends Base
                     return true;
                 },
             ]);
-
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             $model = new ArticleModel();
             return  $model->getList($input);
@@ -513,7 +517,9 @@ class Article extends Base
                     return true;
                 }
             ]);
-
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             $input['content'] = filterScript($input['content']);
             $model = new ArticleModel();

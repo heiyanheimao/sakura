@@ -83,7 +83,9 @@ class DoctorCategory extends Base
                     }
                 }
             ]);
-
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             if ($input['type'] == 1) {
                 $input['parent_id'] = 0;
@@ -123,8 +125,8 @@ class DoctorCategory extends Base
                 'state' => function($v){
                     if (null === $v) {
                         return '缺少参数';
-                    } elseif (!in_array($v, ['0', '1','-1'], true)) {
-                        return '不合法的文章状态';
+                    } elseif ('' !== $v && !in_array($v, ['0', '1','-1'], true)) {
+                        return '不合法的分类状态';
                     } else {
                         return true;
                     }
@@ -140,6 +142,9 @@ class DoctorCategory extends Base
                     return true;
                 },
             ]);
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             $model = new DoctorCategoryModel();
             return  $model->getList($input);
@@ -147,7 +152,7 @@ class DoctorCategory extends Base
         return jsonData(400, '非法请求');
     }
 
-    /**修改文章状态
+    /**修改分类状态
      * @param Request $request
      * @return array
      */
@@ -222,7 +227,7 @@ class DoctorCategory extends Base
         if($info){
             //保存到数据库
             if ($model->updateCover($input,'/uploads/cover/' . $info->getSaveName())) {
-                if ($coverInfo['data']['category_cover'] != '') @unlink(config('app.static_path') . $coverInfo['data']['article_cover']);
+                if ($coverInfo['data']['category_cover'] != '') @unlink(config('app.static_path') . $coverInfo['data']['category_cover']);
                 return jsonData(200, '上传成功',    []);
             } else {
                 @unlink(config('app.upload_path') . 'cover/'.$info->getSaveName());
@@ -254,6 +259,9 @@ class DoctorCategory extends Base
                     return true;
                 },
             ]);
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             $model = new DoctorCategoryModel();
             return  $model->getInfo($input);
@@ -312,7 +320,9 @@ class DoctorCategory extends Base
                     }
                 }
             ]);
-
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
             //逻辑处理
             if ($input['type'] == 1) {
                 $input['parent_id'] = 0;
