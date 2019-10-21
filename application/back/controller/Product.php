@@ -12,17 +12,17 @@ namespace app\back\controller;
 use app\back\model\ProductModel;
 use think\Request;
 use think\Validate;
-use think\validate\ValidateRule;
 
 class Product extends Base
 {
+    private $level = 2;
     public function packageList(Request $request)
     {
         if (self::checkRequest($request)) {
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -64,7 +64,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -109,7 +109,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -144,7 +144,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -194,7 +194,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
             //接收参数
             $input['product_name'] = $request->post('product_name');//产品名称
@@ -258,7 +258,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
             //逻辑处理
             $model = new ProductModel();
@@ -277,7 +277,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
             //接收参数
             $input['product_name']  = $request->post('product_name');//产品名称
@@ -345,7 +345,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数
@@ -385,7 +385,7 @@ class Product extends Base
             //登录态检测
             if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
             //权限检测
-            $auth = self::checkAuth($info,2);
+            $auth = self::checkAuth($info,$this->level);
             if (200 != $auth['code']) return $auth;
 
             //接收参数

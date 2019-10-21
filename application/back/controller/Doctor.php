@@ -16,6 +16,7 @@ use think\Validate;
 
 class Doctor extends Base
 {
+    private $level = 1;
     public function getCategoryInfo(Request $request)
     {
         if (self::checkRequest($request)) {
@@ -24,7 +25,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }
@@ -44,7 +45,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }
@@ -129,7 +130,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }
@@ -224,7 +225,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }
@@ -264,6 +265,10 @@ class Doctor extends Base
         return jsonData(400, '非法请求');
     }
 
+    /**上传封面
+     * @param Request $request
+     * @return array|bool|false|mixed|\think\File
+     */
     public function uploadCover(Request $request)
     {
         //登录态检测
@@ -271,7 +276,7 @@ class Doctor extends Base
             return jsonData(500, '登录态失效，请重新登录');
         }
         //权限检测
-        $auth = self::checkAuth($info, 1);
+        $auth = self::checkAuth($info, $this->level);
         if (200 != $auth['code']) {
             return $auth;
         }
@@ -340,7 +345,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }
@@ -369,6 +374,10 @@ class Doctor extends Base
         return jsonData(400, '非法请求');
     }
 
+    /**更新数据
+     * @param Request $request
+     * @return array
+     */
     public function update(Request $request)
     {
         if (self::checkRequest($request)) {
@@ -377,7 +386,7 @@ class Doctor extends Base
                 return jsonData(500, '登录态失效，请重新登录');
             }
             //权限检测
-            $auth = self::checkAuth($info, 1);
+            $auth = self::checkAuth($info, $this->level);
             if (200 != $auth['code']) {
                 return $auth;
             }

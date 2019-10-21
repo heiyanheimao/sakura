@@ -11,12 +11,13 @@ namespace app\back\controller;
 
 use app\back\model\ArticleModel;
 use app\back\model\ConfigModel;
-use think\facade\Env;
 use think\Request;
 use think\Validate;
 
 class Article extends Base
 {
+    private $level = 1;
+
     /**添加文章
      * @param Request $request
      * @return array
@@ -25,21 +26,25 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
             //接收参数
-            $input['article_back']  = $request->post('article_back');//文章封底
-            $input['content']       = $request->post('content');//文章内容
-            $input['article_source']= $request->post('article_source');//文章来源
-            $input['article_title'] = $request->post('article_title');//文章标题
-            $input['is_recommend']  = $request->post('is_recommend');//是否推荐 1推荐, 0不推荐
-            $input['state']         = $request->post('state');//是否启用 1启用, 0禁用, -1删除
+            $input['article_back']   = $request->post('article_back');//文章封底
+            $input['content']        = $request->post('content');//文章内容
+            $input['article_source'] = $request->post('article_source');//文章来源
+            $input['article_title']  = $request->post('article_title');//文章标题
+            $input['is_recommend']   = $request->post('is_recommend');//是否推荐 1推荐, 0不推荐
+            $input['state']          = $request->post('state');//是否启用 1启用, 0禁用, -1删除
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_back' => function($v){
+                'article_back' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -50,7 +55,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'content' => function($v){
+                'content' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -59,7 +64,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'article_source' => function($v){
+                'article_source' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -70,7 +75,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'article_title' => function($v){
+                'article_title' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -81,7 +86,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'state' => function($v){
+                'state' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif (!in_array($v, ['0', '1'], true)) {
@@ -90,7 +95,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'is_recommend' => function($v){
+                'is_recommend' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif (!in_array($v, ['0', '1'], true)) {
@@ -104,11 +109,11 @@ class Article extends Base
                 return jsonData(401, $validate->getError());
             }
             //逻辑处理
-            $input['content'] = filterScript($input['content']);
+            $input['content']     = filterScript($input['content']);
             $input['category_id'] = 2;
             $input['create_time'] = time();
-            $model = new ArticleModel();
-            return  $model->add($input);
+            $model                = new ArticleModel();
+            return $model->add($input);
         }
         return jsonData(400, '非法请求');
     }
@@ -117,10 +122,14 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
             //接收参数
             $input['article_title'] = $request->post('article_title');//文章标题
             $input['state']         = $request->post('state');//是否启用 1启用, 0禁用, -1删除
@@ -132,31 +141,31 @@ class Article extends Base
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_title' => function($v){
+                'article_title' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     }
                     return true;
                 },
-                'state' => function($v){
+                'state' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
-                    } elseif ('' !== $v &&!in_array($v, ['0', '1'], true)) {
+                    } elseif ('' !== $v && !in_array($v, ['0', '1'], true)) {
                         return '不合法的文章状态';
                     } else {
                         return true;
                     }
                 },
-                'is_recommend' => function($v){
+                'is_recommend' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
-                    } elseif ('' !== $v &&!in_array($v, ['0', '1'], true)) {
+                    } elseif ('' !== $v && !in_array($v, ['0', '1'], true)) {
                         return '不合法的文章推荐';
                     } else {
                         return true;
                     }
                 },
-                'category_id' => function($v){
+                'category_id' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' !== $v && !in_array($v, ['1', '2'], true)) {
@@ -165,19 +174,31 @@ class Article extends Base
                         return true;
                     }
                 },
-                'page' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的页数';
+                'page' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的页数';
+                    }
                     return true;
                 },
-                'start' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if ('' !== $v && false == validateDate($v)) return '不合法的时间';
+                'start' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if ('' !== $v && false == validateDate($v)) {
+                        return '不合法的时间';
+                    }
                     return true;
                 },
-                'end' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if ('' !== $v && false == validateDate($v)) return '不合法的时间';
+                'end' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if ('' !== $v && false == validateDate($v)) {
+                        return '不合法的时间';
+                    }
                     return true;
                 },
             ]);
@@ -186,7 +207,7 @@ class Article extends Base
             }
             //逻辑处理
             $model = new ArticleModel();
-            return  $model->getList($input);
+            return $model->getList($input);
         }
         return jsonData(400, '非法请求');
     }
@@ -199,25 +220,37 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
 
             //接收参数
-            $input['article_id']  = $request->post('article_id');//文章id
-            $input['is_recommend']= $request->post('is_recommend');//是否推荐
+            $input['article_id']   = $request->post('article_id');//文章id
+            $input['is_recommend'] = $request->post('is_recommend');//是否推荐
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'is_recommend' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (!in_array($v, ['推荐', '不推荐'], true)) return '不合法的参数';
+                'is_recommend' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (!in_array($v, ['推荐', '不推荐'], true)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 },
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 }
             ]);
@@ -225,8 +258,8 @@ class Article extends Base
                 return jsonData(401, $validate->getError());
             }
             //逻辑处理
-            $input['is_recommend'] = $input['is_recommend'] == '推荐'?0:1;
-            $model = new ArticleModel();
+            $input['is_recommend'] = $input['is_recommend'] == '推荐' ? 0 : 1;
+            $model                 = new ArticleModel();
             return $model->changeRecommend($input);
         }
         return jsonData(400, '非法请求');
@@ -240,25 +273,37 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
 
             //接收参数
-            $input['article_id']  = $request->post('article_id');//文章id
-            $input['state']= $request->post('state');//是否推荐
+            $input['article_id'] = $request->post('article_id');//文章id
+            $input['state']      = $request->post('state');//是否推荐
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'state' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (!in_array($v, ['已启用', '已禁用'], true)) return '不合法的参数';
+                'state' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (!in_array($v, ['已启用', '已禁用'], true)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 },
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 }
             ]);
@@ -285,20 +330,30 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
 
             //接收参数
-            $input['article_id']  = $request->post('article_id');//文章id
+            $input['article_id'] = $request->post('article_id');//文章id
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
-                    if ($v <=10) return '非疗养科普文章不能删除';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
+                    if ($v <= 10) {
+                        return '非疗养科普文章不能删除';
+                    }
                     return true;
                 }
             ]);
@@ -306,12 +361,13 @@ class Article extends Base
                 return jsonData(401, $validate->getError());
             }
             //逻辑处理
-            $model = new ArticleModel();
+            $model          = new ArticleModel();
             $input['state'] = -1;
             return $model->del($input);
         }
         return jsonData(400, '非法请求');
     }
+
     /**显示文章内容
      * @param Request $request
      * @return array
@@ -320,19 +376,27 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
 
             //接收参数
-            $input['article_id']  = $request->post('article_id');//文章id
+            $input['article_id'] = $request->post('article_id');//文章id
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 }
             ]);
@@ -349,19 +413,27 @@ class Article extends Base
     public function uploadCover(Request $request)
     {
         //登录态检测
-        if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+        if (!($info = self::getStatus())) {
+            return jsonData(500, '登录态失效，请重新登录');
+        }
         //权限检测
-        $auth = self::checkAuth($info,1);
-        if (200 != $auth['code']) return $auth;
+        $auth = self::checkAuth($info, $this->level);
+        if (200 != $auth['code']) {
+            return $auth;
+        }
 
         //接收参数
-        $input['article_id']  = $request->post('id');//文章id
+        $input['article_id'] = $request->post('id');//文章id
         //参数校验
         $validate = new Validate();
         $validate->rule([
-            'article_id' => function($v){
-                if (null === $v) return '缺少参数';
-                if (false == isPosInt($v)) return '不合法的参数';
+            'article_id' => function ($v) {
+                if (null === $v) {
+                    return '缺少参数';
+                }
+                if (false == isPosInt($v)) {
+                    return '不合法的参数';
+                }
                 return true;
             }
         ]);
@@ -369,25 +441,34 @@ class Article extends Base
             return jsonData(401, $validate->getError());
         }
         //获取配置
-        $config = (new ConfigModel())->getConfig(['IMG_MAX','IMG_TYPE']);
-        if (false == $config) return jsonData(401, '未获取到配置项');
+        $config = (new ConfigModel())->getConfig(['IMG_MAX', 'IMG_TYPE']);
+        if (false == $config) {
+            return jsonData(401, '未获取到配置项');
+        }
         //获取文章原始封面
-        $model = new ArticleModel();
+        $model     = new ArticleModel();
         $coverInfo = $model->getCover($input);
-        if (200 != $coverInfo['code']) return $info;
+        if (200 != $coverInfo['code']) {
+            return $info;
+        }
         //上传
         $file = $request->file('file');
-        $info = $file->validate(['size'=>$config[0]['config_value'] *1024,'ext'=>$config[1]['config_value']])->move( config('app.upload_path') .'cover/');
-        if($info){
+        $info = $file->validate([
+            'size' => $config[0]['config_value'] * 1024,
+            'ext' => $config[1]['config_value']
+        ])->move(config('app.upload_path') . 'cover/');
+        if ($info) {
             //保存到数据库
-            if ($model->updateCover($input,'/uploads/cover/' . $info->getSaveName())) {
-                if ($coverInfo['data']['article_cover'] != '') @unlink(config('app.static_path') . $coverInfo['data']['article_cover']);
-                return jsonData(200, '上传成功',    []);
+            if ($model->updateCover($input, '/uploads/cover/' . $info->getSaveName())) {
+                if ($coverInfo['data']['article_cover'] != '') {
+                    @unlink(config('app.static_path') . $coverInfo['data']['article_cover']);
+                }
+                return jsonData(200, '上传成功', []);
             } else {
-                @unlink(config('app.upload_path') . 'cover/'.$info->getSaveName());
-                return jsonData(403, '上传失败',    []);
+                @unlink(config('app.upload_path') . 'cover/' . $info->getSaveName());
+                return jsonData(403, '上传失败', []);
             }
-        }else{
+        } else {
             // 上传失败获取错误信息
             return jsonData(402, $file->getError());
         }
@@ -402,19 +483,27 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
 
             //接收参数
-            $input['article_id']  = $request->post('article_id');//文章id
+            $input['article_id'] = $request->post('article_id');//文章id
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 }
             ]);
@@ -436,22 +525,26 @@ class Article extends Base
     {
         if (self::checkRequest($request)) {
             //登录态检测
-            if (!($info = self::getStatus())) return jsonData(500, '登录态失效，请重新登录');
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
             //权限检测
-            $auth = self::checkAuth($info,1);
-            if (200 != $auth['code']) return $auth;
+            $auth = self::checkAuth($info, $this->level);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
             //接收参数
-            $input['article_back']  = $request->post('article_back');//文章封底
-            $input['content']       = $request->post('content');//文章内容
-            $input['article_source']= $request->post('article_source');//文章来源
-            $input['article_title'] = $request->post('article_title');//文章标题
-            $input['is_recommend']  = $request->post('is_recommend');//是否推荐 1推荐, 0不推荐
-            $input['state']         = $request->post('state');//是否启用 1启用, 0禁用, -1删除
-            $input['article_id']  = $request->post('article_id');//文章id
+            $input['article_back']   = $request->post('article_back');//文章封底
+            $input['content']        = $request->post('content');//文章内容
+            $input['article_source'] = $request->post('article_source');//文章来源
+            $input['article_title']  = $request->post('article_title');//文章标题
+            $input['is_recommend']   = $request->post('is_recommend');//是否推荐 1推荐, 0不推荐
+            $input['state']          = $request->post('state');//是否启用 1启用, 0禁用, -1删除
+            $input['article_id']     = $request->post('article_id');//文章id
             //参数校验
             $validate = new Validate();
             $validate->rule([
-                'article_back' => function($v){
+                'article_back' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -462,7 +555,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'content' => function($v){
+                'content' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -471,7 +564,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'article_source' => function($v){
+                'article_source' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -482,7 +575,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'article_title' => function($v){
+                'article_title' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif ('' === $v) {
@@ -493,7 +586,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'state' => function($v){
+                'state' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif (!in_array($v, ['0', '1'], true)) {
@@ -502,7 +595,7 @@ class Article extends Base
                         return true;
                     }
                 },
-                'is_recommend' => function($v){
+                'is_recommend' => function ($v) {
                     if (null === $v) {
                         return '缺少参数';
                     } elseif (!in_array($v, ['0', '1'], true)) {
@@ -511,9 +604,13 @@ class Article extends Base
                         return true;
                     }
                 },
-                'article_id' => function($v){
-                    if (null === $v) return '缺少参数';
-                    if (false == isPosInt($v)) return '不合法的参数';
+                'article_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
                     return true;
                 }
             ]);
@@ -522,8 +619,8 @@ class Article extends Base
             }
             //逻辑处理
             $input['content'] = filterScript($input['content']);
-            $model = new ArticleModel();
-            return  $model->update($input);
+            $model            = new ArticleModel();
+            return $model->update($input);
         }
         return jsonData(400, '非法请求');
     }

@@ -31,7 +31,8 @@ class Base extends Controller
 
 
     /**检测登录态
-     * @return bool|mixed
+     * @param Request $request
+     * @return array
      */
     public function getAuth(Request $request)
     {
