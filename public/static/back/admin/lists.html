@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+	<meta charset="UTF-8">
+	<title>正禾疗养后台系统</title>
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+	<link rel="stylesheet" href="/css/font.css">
+	<link rel="stylesheet" href="/css/login.css">
+	<link rel="stylesheet" href="/css/xadmin.css">
+	<style>
+		[v-cloak] {
+			display: none;
+		}
+	</style>
+	<script src="/lib/layui/layui.js" charset="utf-8"></script>
+	<script type="text/javascript" src="/js/xadmin.js"></script>
+	<script type="text/javascript" src="/js/vue.min.js"></script>
+	<!--[if lt IE 9]>
+	<script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	<script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<div class="x-nav">
+		<span class="layui-breadcrumb">
+			<a href="">首页</a>
+			<a href="">用户管理</a>
+			<a>
+				<cite>系统用户</cite></a>
+		</span>
+		<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+			onclick="location.reload()" title="刷新">
+			<i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
+	</div>
+	<div class="layui-fluid" id="app">
+		<div class="layui-row layui-col-space15">
+			<div class="layui-col-md12">
+				<div class="layui-card">
+					<div class="layui-card-body ">
+						<form class="layui-form layui-col-space5">
+							<div class="layui-inline layui-show-xs-block">
+								<input type="text" name="admin_name" id="admin_name" v-model="admin_name" placeholder="请输入管理员名称"
+									autocomplete="off" class="layui-input">
+							</div>
+							<div class="layui-inline layui-show-xs-block">
+								<input type="text" name="admin_account" id="admin_account" v-model="admin_account"
+									placeholder="请输入管理员账号" autocomplete="off" class="layui-input">
+							</div>
+							<div class="layui-inline layui-show-xs-block">
+								<button class="layui-btn" type="button" @click="btnSearch"><i class="layui-icon">&#xe615;</i></button>
+							</div>
+						</form>
+					</div>
+					<div class="layui-card-header">
+						<button class="layui-btn layui-btn-danger" @click="delAll"><i class="layui-icon"></i>批量删除</button>
+						<button class="layui-btn" onclick="xadmin.open('添加用户','add.html',600,400)"><i
+								class="layui-icon"></i>添加</button>
+					</div>
+					<div class="layui-card-body layui-table-body layui-table-main">
+						<table class="layui-table layui-form" id="table">
+							<thead>
+								<tr class='header'>
+									<th>
+										<input type="checkbox" lay-filter="checkall" name="" lay-skin="primary">
+									</th>
+									<th>ID</th>
+									<th>账号</th>
+									<th>名称</th>
+									<th>管理员类型</th>
+									<th>权限</th>
+									<th>创建时间</th>
+									<th>状态</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-if="loading == true">
+									<td colspan="9" style="text-align: center;">数据加载中...</td>
+								</tr>
+								<tr v-cloak v-for="(item,index) in lists">
+									<td>
+										<input type="checkbox" name="id" :value="item.admin_id" lay-skin="primary">
+									</td>
+									<td>{{item.admin_id}}</td>
+									<td>{{item.admin_account}}</td>
+									<td>{{item.admin_name}}</td>
+									<td>{{item.admin_type}}</td>
+									<td>{{item.level}}</td>
+									<td>{{item.create_time}}</td>
+									<td class="td-status">
+										<span class="layui-btn layui-btn-mini" :class="getBtnClass(index)">{{item.state}}</span></td>
+									<td class="td-manage" v-if="item.state =='已启用'">
+										<a @click.stop="run(item.admin_id,$event)" href="javascript:;" title="禁用">
+											<i class="layui-icon">&#x1006;</i>
+										</a>
+										<a @click="repwd(item.admin_id)" title="修改密码" href="javascript:;">
+											<i class="layui-icon">&#xe631;</i>
+										</a>
+										<a title="权限编辑" @click="authEdit(item.admin_id)" href="javascript:;">
+											<i class="layui-icon">&#xe642;</i>
+										</a>
+										<a title="删除" @click="del(item.admin_id,$event)" href="javascript:;">
+											<i class="layui-icon">&#xe640;</i>
+										</a>
+									</td>
+									<td class="td-manage" v-else-if="item.state =='已禁用'">
+										<a @click="run(item.admin_id,$event)" href="javascript:;" title="启用">
+											<i class="layui-icon">&#xe605;</i>
+										</a>
+										<a @click="repwd(item.admin_id)" title="修改密码" href="javascript:;">
+											<i class="layui-icon">&#xe631;</i>
+										</a>
+										<a title="权限编辑" @click="authEdit(item.admin_id)" href="javascript:;">
+											<i class="layui-icon">&#xe642;</i>
+										</a>
+										<a title="删除" @click="del(item.admin_id,$event)" href="javascript:;">
+											<i class="layui-icon">&#xe640;</i>
+										</a>
+									</td>
+									<td class="td-manage" v-else>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="layui-card-body " id="pageList">
+						<div class="page" v-cloak v-if="lists !==[]">
+							<div>
+								<a class="prev" href="javascript:;" @click="prev">&lt;&lt;</a>
+								<a class="num" href="javascript:;" v-if="page-2>0" @click="goPage(page-2)">{{page-2}}</a>
+								<a class="num" href="javascript:;" v-if="page-1>0" @click="goPage(page-1)">{{page-1}}</a>
+								<span class="current">{{page}}</span>
+								<a class="num" href="javascript:;" v-if="page*1+1<=pageAll" @click="goPage(page*1+1)">{{page*1+1}}</a>
+								<a class="num" href="javascript:;" v-if="page*1+2<=pageAll" @click="goPage(page*1+2)">{{page*1+2}}</a>
+								<a class="next" href="javascript:;" @click="next">&gt;&gt;</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+	layui.use(['laydate', 'form', 'jquery', 'table'], function () {
+		let form = layui.form;
+		let $ = layui.jquery;
+		let app = new Vue({
+			el: '#app',
+			data: {
+				admin_account: '',
+				admin_name: '',
+				page: 1,
+				pageAll: 1,
+				loading: true,
+				lists: []
+			},
+			created: function () {
+				this.search()
+			},
+			updated: function () {
+				//重新渲染表格
+				layui.use(['form'], function () {
+					form.render();
+				})
+			},
+			methods: {
+				btnSearch() {
+					this.page = 1
+					this.search()
+				},
+				search() {
+					let _this = this
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/admin/getLists",
+						//数据，json字符串
+						data: { admin_account: this.admin_account, admin_name: this.admin_name, page: this.page },
+						//请求成功
+						success: function (rtn) {
+							_this.loading = false
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								_this.lists = rtn.data.list
+								_this.page = rtn.data.page
+								_this.pageAll = rtn.data.pageAll
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+				},
+				getBtnClass(index) {
+					if (this.lists[index].state === '已启用') {
+						return { 'layui-btn-normal': true, 'layui-btn-danger': false, 'layui-btn-disabled': false }
+					} else if (this.lists[index].state === '已禁用') {
+						return { 'layui-btn-normal': false, 'layui-btn-danger': true, 'layui-btn-disabled': false }
+					} else {
+						return { 'layui-btn-normal': false, 'layui-btn-danger': false, 'layui-btn-disabled': true }
+					}
+				},
+				run(admin_id, event) {
+					let _this = this
+					let state = $(event.target).parent().attr('title') == '启用' ? '启用' : '禁用'
+					layer.confirm('确认要' + state + '吗？', function (index) {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/admin/changeStatus",
+							//数据，json字符串
+							data: { state: state, admin_id: admin_id },
+							//请求成功
+							success: function (rtn) {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									_this.lists[admin_id].state = rtn.data
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				},
+				del(admin_id, event) {
+					let _this = this
+					layer.confirm('确认要删除吗？', function (index) {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/admin/changeStatus",
+							//数据，json字符串
+							data: { state: '删除', admin_id: admin_id },
+							//请求成功
+							success: function (rtn) {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									_this.lists[admin_id].state = rtn.data
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				},
+				authEdit(admin_id) {
+					xadmin.open('权限编辑', '/back/admin/authEdit.html?admin_id=' + admin_id, 600, 400)
+				},
+				repwd(admin_id) {
+					xadmin.open('修改密码', '/back/admin/repwd.html?admin_id=' + admin_id, 600, 400)
+				},
+				next() {
+					if (this.page * 1 + 1 <= this.pageAll) {
+						this.page++
+						this.search()
+					} else {
+						layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+					}
+				},
+				prev() {
+					if (this.page * 1 - 1 > 0) {
+						this.page--
+						this.search()
+					} else {
+						layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+					}
+				},
+				goPage(page) {
+					this.page = page
+					this.search()
+				},
+				delAll() {
+					let ids = [];
+					// 获取选中的id 
+					$('tbody input').each(function (index, el) {
+						if ($(this).prop('checked')) {
+							ids.push($(this).val())
+						}
+					});
+
+					layer.confirm('确认要删除吗？', (index) => {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/admin/delAll",
+							//数据，json字符串
+							data: { admin_id: ids },
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									// 
+									ids.map((item) => {
+										this.lists[item].state = '已删除'
+									})
+									layer.msg('删除成功', { icon: 1 });
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+						//捉到所有被选中的，发异步进行删除
+						// layer.msg('删除成功', { icon: 1 });
+						// ids.map((item) => {
+						// 	this.lists[item].state = '已删除'
+						// })
+					});
+				}
+			}
+		})
+		// search()
+		// 监听全选
+		form.on('checkbox(checkall)', function (data) {
+			if (data.elem.checked) {
+				$('tbody input').prop('checked', true);
+			} else {
+				$('tbody input').prop('checked', false);
+			}
+			form.render('checkbox');
+		});
+	});
+
+</script>
+
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+	<meta charset="UTF-8">
+	<title>正禾疗养后台系统</title>
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+	<link rel="stylesheet" href="/css/font.css">
+	<link rel="stylesheet" href="/css/xadmin.css">
+	<style>
+		[v-cloak] {
+			display: none;
+		}
+	</style>
+	<script src="/lib/layui/layui.js" charset="utf-8"></script>
+	<script type="text/javascript" src="/js/xadmin.js"></script>
+	<script type="text/javascript" src="/js/vue.min.js"></script>
+	<!--[if lt IE 9]>
+	<script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	<script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<div class="x-nav">
+		<span class="layui-breadcrumb">
+			<a href="">首页</a>
+			<a href="">订单管理</a>
+			<a>
+				<cite>订单管理</cite></a>
+		</span>
+		<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+			onclick="location.reload()" title="刷新">
+			<i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
+	</div>
+	<div class="layui-fluid" id="app">
+		<div class="layui-row layui-col-space15">
+			<div class="layui-col-md12">
+				<div class="layui-card">
+					<div class="layui-card-body ">
+						<form class="layui-form layui-col-space5">
+							<div class="layui-form-item">
+								<div class="layui-input-inline layui-show-xs-block">
+									<input type="text" name="order_number" v-model.lazy="order_number" placeholder="请输入订单编号"
+										autocomplete="off" class="layui-input">
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<input type="text" name="wechat_number" v-model.lazy="wechat_number" placeholder="请输入微信支付号"
+										autocomplete="off" class="layui-input">
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<input type="text" name="user_name" v-model.lazy="user_name" placeholder="请输入用户名" autocomplete="off"
+										class="layui-input">
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-input-inline layui-show-xs-block">
+									<input type="text" name="package_name" v-model.lazy="package_name" placeholder="请输入产品包名"
+										autocomplete="off" class="layui-input">
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<select name="state" lay-filter='getState'>
+										<option value="">请选择入住状态</option>
+										<option value="2">未入住</option>
+										<option value="1">已入住</option>
+										<option value="0">关闭</option>
+									</select>
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<select name="payment_state" lay-filter='getPaymentState'>
+										<option value="">请选择支付状态</option>
+										<option value="1">是</option>
+										<option value="0">否</option>
+									</select>
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-input-inline layui-show-xs-block">
+									<select name="refund_state" lay-filter='getRefundState'>
+										<option value="">请选择退款状态</option>
+										<option value="2">申请退款</option>
+										<option value="1">是</option>
+										<option value="0">否</option>
+									</select>
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<input class="layui-input" autocomplete="off" placeholder="订单起始时间" name="start" id="start"
+										v-model="start">
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<input class="layui-input" autocomplete="off" placeholder="订单结束时间" name="end" id="end" v-model="end">
+								</div>
+								<div class="layui-input-inline layui-show-xs-block">
+									<button class="layui-btn" type="button" @click.stop="btnSearch()"><i
+											class="layui-icon">&#xe615;</i></button>
+								</div>
+							</div>
+
+						</form>
+					</div>
+					<div class="layui-card-body layui-table-body layui-table-main">
+						<table class="layui-table layui-form" id="table">
+							<thead>
+								<tr class='header'>
+									<th>ID</th>
+									<th>订单编号</th>
+									<th>微信支付号</th>
+									<th>用户</th>
+									<th>订单金额</th>
+									<th>产品包</th>
+									<th>产品</th>
+									<th>下单时间</th>
+									<th>入住状态</th>
+									<th>支付状态</th>
+									<th>支付时间</th>
+									<th>退款状态</th>
+									<th>退款时间</th>
+									<th>退款原因</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-cloak v-for="(item,index) in list" :key="item.hotel_id">
+									<td>{{item.order_id}}</td>
+									<td>{{item.order_number}}</td>
+									<td>{{item.wechat_number}}</td>
+									<td>{{item.user_name}}</td>
+									<td>¥{{item.order_price}}</td>
+									<td>{{item.package_name}}</td>
+									<td><span class="layui-btn layui-btn-mini layui-btn-primary" @click="showProducts(index)">查看</span>
+									</td>
+									<td>{{item.create_time}}</td>
+									<td>{{item.state}}</td>
+									<td>{{item.payment_state}}</td>
+									<td>{{item.payment_time}}</td>
+									<td>{{item.refund_state}}</td>
+									<td>{{item.refund_time}}</td>
+									<td>{{item.refund_reason}}</td>
+									<td class="td-manage">
+										<span v-if="item.refund_state =='申请退款'" class="layui-btn layui-btn-mini layui-btn-normal" @click="refund(index)">退款</span>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="layui-card-body " id="pageList">
+						<div class="page" v-cloak v-if="list !==[]">
+							<div>
+								<a class="prev" href="javascript:;" @click="prev">&lt;&lt;</a>
+								<a class="num" href="javascript:;" v-if="page-2>0" @click="goPage(page-2)">{{page-2}}</a>
+								<a class="num" href="javascript:;" v-if="page-1>0" @click="goPage(page-1)">{{page-1}}</a>
+								<span class="current">{{page}}</span>
+								<a class="num" href="javascript:;" v-if="page*1+1<=pageAll" @click="goPage(page*1+1)">{{page*1+1}}</a>
+								<a class="num" href="javascript:;" v-if="page*1+2<=pageAll" @click="goPage(page*1+2)">{{page*1+2}}</a>
+								<a class="next" href="javascript:;" @click="next">&gt;&gt;</a>
+							</div>
+						</div>
+					</div>
+					<div style="display: none;" id="showProducts">
+							<table class="layui-table layui-form" id="table">
+								<thead>
+									<tr class='header'>
+										<th>产品名称</th>
+										<th>产品类型</th>
+										<th>剩余</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-cloak v-for="(item,index) in products">
+										<td>{{item.product_name}}</td>
+										<td>{{item.product_type}}</td>
+										<td v-if="item.product_type == '次数卡'">{{item.product_num}}</td>
+										<td v-else>¥{{item.product_money}}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+
+	let app = new Vue({
+		el: '#app',
+		data: {
+			order_number: '',
+			wechat_number: '',
+			user_name: '',
+			package_name: '',
+			state: '',
+			payment_state: '',
+			refund_state: '',
+			start: '',
+			end: '',
+			list: [],
+			page: 1,
+			pageAll: 1,
+			products: []
+		},
+		created: function () {
+			layui.use(['laydate', 'form', 'layer', 'jquery'], () => {
+				let form = layui.form
+				let laydate = layui.laydate
+				let layer = layui.layer
+				let $ = layui.jquery
+				let upload = layui.upload;
+				form.on('select(getState)', (data) => {
+					this.state = data.value
+				})
+				form.on('select(getPaymentState)', (data) => {
+					this.payment_state = data.value
+				})
+				form.on('select(getRefundState)', (data) => {
+					this.refund_state = data.value
+				})
+				laydate.render({
+					elem: '#start',
+					type: 'datetime',
+					trigger: 'click',
+					done: (value) => {
+						this.start = value
+					}
+				});
+				laydate.render({
+					elem: '#end',
+					type: 'datetime',
+					trigger: 'click',
+					done: (value) => {
+						this.end = value
+					}
+				});
+				this.search()
+			})
+		},
+		updated: function () {
+			//重新渲染表格
+			layui.use(['form'], () => {
+				layui.form.render();
+			})
+		},
+		methods: {
+			btnSearch() {
+				this.page = 1
+				this.search()
+			},
+			search() {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/order/getList",
+						//数据，json字符串
+						data: {
+							order_number: this.order_number,
+							wechat_number: this.wechat_number,
+							user_name: this.user_name,
+							package_name: this.package_name,
+							state: this.state,
+							payment_state: this.payment_state,
+							refund_state: this.refund_state,
+							start: this.start,
+							end: this.end,
+							page: this.page
+						},
+						//请求成功
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								this.list = rtn.data.list
+								this.page = rtn.data.page
+								this.pageAll = rtn.data.pageAll
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+				});
+			},
+			changeState(i, state) {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let msg = '';
+					let res_msg = '';
+					switch (state) {
+						case 1:
+							msg = '启用'
+							res_msg = '已启用'
+							break;
+						case 0:
+							msg = '禁用'
+							res_msg = '已禁用'
+							break;
+						case -1:
+							msg = '删除'
+							res_msg = '已删除'
+							break;
+					}
+					layer.confirm('您确定要' + msg + '吗？', {}, (index) => {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/hotel/changeState",
+							//数据，json字符串
+							data: { hotel_id: this.list[i].hotel_id, state: state },
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									this.list[i].state = res_msg;
+									layer.alert(rtn.msg, { icon: 1, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				})
+			},
+			showProducts(i) {
+				layui.use(['jquery', 'layer'], () => {
+					let layer = layui.layer
+					let $ = layui.jquery
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/order/getProducts",
+						//数据，json字符串
+						data: { product_ids: this.list[i].product_ids },
+						//请求成功
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+									//关闭弹窗
+									layer.close(index1);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								this.products = rtn.data
+								layer.open({
+									type: 1,
+									title: "产品显示",
+									closeBtn: false,
+									shift: 2,
+									area: ['30%', '80%'],
+									shadeClose: true,
+									// btn: ['新增', '取消'],
+									// btnAlign: 'c',
+									content: $('#showProducts')
+								});
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+									//关闭弹窗
+									layer.close(index1);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+
+				})
+			},
+			next() {
+				if (this.page * 1 + 1 <= this.pageAll) {
+					this.page++
+					this.search()
+				} else {
+					layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+				}
+			},
+			prev() {
+				if (this.page * 1 - 1 > 0) {
+					this.page--
+					this.search()
+				} else {
+					layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+				}
+			},
+			goPage(page) {
+				this.page = page
+				this.search()
+			},
+		}
+	})
+</script>
+
+</html>

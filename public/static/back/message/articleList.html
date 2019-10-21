@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+	<meta charset="UTF-8">
+	<title>正禾疗养后台系统</title>
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+	<link rel="stylesheet" href="/css/font.css">
+	<link rel="stylesheet" href="/css/xadmin.css">
+	<style>
+		[v-cloak] {
+			display: none;
+		}
+	</style>
+	<script src="/lib/layui/layui.js" charset="utf-8"></script>
+	<script type="text/javascript" src="/js/xadmin.js"></script>
+	<script type="text/javascript" src="/js/vue.min.js"></script>
+	<!--[if lt IE 9]>
+	<script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	<script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<div class="x-nav">
+		<span class="layui-breadcrumb">
+			<a href="">首页</a>
+			<a href="">信息管理</a>
+			<a>
+				<cite>文章管理</cite></a>
+		</span>
+		<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+			onclick="location.reload()" title="刷新">
+			<i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
+	</div>
+	<div class="layui-fluid" id="app">
+		<div class="layui-row layui-col-space15">
+			<div class="layui-col-md12">
+				<div class="layui-card">
+					<div class="layui-card-body ">
+						<form class="layui-form layui-col-space5">
+							<div class="layui-inline layui-show-xs-block">
+								<input type="text" name="article_title" v-model="article_title" placeholder="请输入文章标题" autocomplete="off"
+									class="layui-input">
+							</div>
+							<div class="layui-input-inline layui-show-xs-block">
+								<select name="state" lay-filter='getState'>
+									<option value="">请选择</option>
+									<option value="1">启用</option>
+									<option value="0">禁用</option>
+									<option value="-1">删除</option>
+								</select>
+							</div>
+							<div class="layui-input-inline layui-show-xs-block">
+								<select name="is_recommend" lay-filter='getRecommend'>
+									<option value="">请选择</option>
+									<option value="1">推荐</option>
+									<option value="0">不推荐</option>
+								</select>
+							</div>
+							<div class="layui-input-inline layui-show-xs-block">
+								<select name="category_id" lay-filter='getCategoryId'>
+									<option value="">请选择</option>
+									<option value="1">公司简介</option>
+									<option value="2">疗养科普</option>
+								</select>
+							</div>
+							<div class="layui-inline layui-show-xs-block">
+								<input class="layui-input" autocomplete="off" placeholder="创建时间开始" name="start" id="start"
+									v-model="start">
+							</div>
+							<div class="layui-inline layui-show-xs-block">
+								<input class="layui-input" autocomplete="off" placeholder="创建时间结束" name="end" id="end" v-model="end">
+							</div>
+
+							<div class="layui-inline layui-show-xs-block">
+								<button class="layui-btn" type="button" @click.stop="btnSearch"><i class="layui-icon">&#xe615;</i></button>
+							</div>
+						</form>
+					</div>
+					<div class="layui-card-header">
+						<button class="layui-btn" onclick="xadmin.open('添加疗养科普文章','/back/message/articleAdd.html',1000,600)"><i
+								class="layui-icon"></i>添加</button>
+					</div>
+					<div class="layui-card-body layui-table-body layui-table-main">
+						<table class="layui-table layui-form" id="table">
+							<thead>
+								<tr class='header'>
+									<th>ID</th>
+									<th>文章标题</th>
+									<th>文章类型</th>
+									<th>文章内容</th>
+									<th>文章封面</th>
+									<th>文章封底</th>
+									<th>文章来源</th>
+									<th>是否推荐</th>
+									<th>创建时间</th>
+									<th>状态</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-cloak v-for="(item,index) in list" :key="item.article_id">
+									<td>{{item.article_id}}</td>
+									<td>{{item.article_title}}</td>
+									<td>{{item.category_id}}</td>
+									<td><span class="layui-btn layui-btn-mini layui-btn-primary"
+											@click="showArticle(item.article_id)">查看</span></td>
+									</td>
+									<td><img :src="item.article_cover" alt=""
+											style="width: 200px;height: 50px;"></td>
+									<td>{{item.article_back}}</td>
+									<td>{{item.article_source}}</td>
+									<td class="td-status">
+										<span class="layui-btn layui-btn-mini" :class="getRecClass(item.is_recommend)"
+											@click.stop="changeRecommend(item.article_id,item.is_recommend,index)">{{item.is_recommend}}</span>
+									</td>
+									<td>{{item.create_time}}</td>
+									<td class="td-status">
+										<span class="layui-btn layui-btn-mini" :class="getStateClass(item.state)"
+											@click.stop="changeState(item.article_id,item.state,index)">{{item.state}}</span></td>
+									<td class="td-manage" v-if="item.state =='已启用'">
+											<a title="上传封面" class="setCover" :lay-data="'{url: \'/back/article/uploadCover\',data:{id:'+ item.article_id +'}}'" href="javascript:;">
+													<i class="layui-icon">&#xe67c;</i>
+												</a>
+										<a title="编辑" @click="edit(item.article_id)" href="javascript:;">
+											<i class="layui-icon">&#xe642;</i>
+										</a>
+										<a title="删除" v-if="item.category_id === '疗养科普' && item.state !=='已删除'" @click="del(item.article_id,index)"
+											href="javascript:;">
+											<i class="layui-icon">&#xe640;</i>
+										</a>
+									</td>
+									<td class="td-manage" v-else>
+											<a title="上传封面" class="setCover" lay-data="{url: '/b/', accept: 'file'}" href="javascript:;">
+												<i class="layui-icon">&#xe67c;</i>
+											</a>
+										<a title="编辑" @click="edit(item.article_id)" href="javascript:;">
+											<i class="layui-icon">&#xe642;</i>
+										</a>
+										<a title="删除" v-if="item.category_id === '疗养科普' && item.state !=='已删除'" @click="del(item.article_id,index)"
+											href="javascript:;">
+											<i class="layui-icon">&#xe640;</i>
+										</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="layui-card-body " id="pageList">
+						<div class="page" v-cloak v-if="list !==[]">
+							<div>
+								<a class="prev" href="javascript:;" @click="prev">&lt;&lt;</a>
+								<a class="num" href="javascript:;" v-if="page-2>0" @click="goPage(page-2)">{{page-2}}</a>
+								<a class="num" href="javascript:;" v-if="page-1>0" @click="goPage(page-1)">{{page-1}}</a>
+								<span class="current">{{page}}</span>
+								<a class="num" href="javascript:;" v-if="page*1+1<=pageAll" @click="goPage(page*1+1)">{{page*1+1}}</a>
+								<a class="num" href="javascript:;" v-if="page*1+2<=pageAll" @click="goPage(page*1+2)">{{page*1+2}}</a>
+								<a class="next" href="javascript:;" @click="next">&gt;&gt;</a>
+							</div>
+						</div>
+					</div>
+					<!-- <div id="changeState" style="display: none;"> 
+						<form class="layui-form" id="add-form" action="" style="margin-top: 10px;width: 80%;">
+							<div class="layui-form-item center">
+								<label class="layui-form-label">配置名称</label>
+								<div class="layui-input-block">
+									<select name="state" lay-filter='state'>
+										<option value="1">启用</option>
+										<option value="0">禁用</option>
+										<option value="-1">删除</option>
+									</select>
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-input-block">
+									<button class="layui-btn" lay-submit lay-filter="save">确定</button>
+								</div>
+							</div>
+						</form>
+					</div>-->
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+
+	let app = new Vue({
+		el: '#app',
+		data: {
+			article_title: '',
+			state: '',
+			is_recommend: '',
+			category_id: '',
+			start: '',
+			end: '',
+			list: [],
+			page: 1,
+			pageAll: 1,
+			nowIndex: 0,
+			nowLayerIndex: 0
+		},
+		created: function () {
+			layui.use(['laydate', 'form', 'layer', 'jquery', 'upload'], () => {
+				let form = layui.form
+				let laydate = layui.laydate
+				let layer = layui.layer
+				let $ = layui.jquery
+				let upload = layui.upload;
+				form.on('select(getState)', (data) => {
+					this.state = data.value
+				})
+				form.on('select(getRecommend)', (data) => {
+					this.is_recommend = data.value
+				})
+				form.on('select(getCategoryId)', (data) => {
+					this.category_id = data.value
+				})
+
+				//执行一个laydate实例
+				laydate.render({
+					elem: '#start',
+					type: 'datetime',
+					trigger: 'click',
+					done: (value) => {
+						this.start = value
+					}
+				});
+				laydate.render({
+					elem: '#end',
+					type: 'datetime',
+					trigger: 'click',
+					done: (value) => {
+						this.end = value
+					}
+				});
+				this.search()
+			})
+		},
+		updated: function () {
+			//重新渲染表格
+			layui.use(['form', 'upload'], () => {
+				// for (const i in this.list) {
+				// 	if (this.list[i].article_cover == '') {
+						layui.upload.render({
+							elem: '.setCover' //绑定元素
+							,before:function(){
+								console.log(2)
+							}
+							, done: (rtn) => {
+								//上传完毕回调
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									// this.list[rtn.data.index].article_cover = rtn.data.url
+									location.reload()
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+									});
+								}
+							}
+							, error: function () {
+								//请求异常回调
+							}
+						});
+					// }
+
+				// }
+				layui.form.render();
+			})
+		},
+		methods: {
+			btnSearch(){
+				this.page = 1
+				this.search()
+			},
+			search() {
+				layui.use(['jquery', 'layer', 'upload'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let upload = layui.upload
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/article/getList",
+						//数据，json字符串
+						data: { article_title: this.article_title, state: this.state, is_recommend: this.is_recommend, category_id: this.category_id, page: this.page, start: this.start, end: this.end },
+						//请求成功
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								this.list = rtn.data.list
+								this.page = rtn.data.page
+								this.pageAll = rtn.data.pageAll
+
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+				});
+			},
+			getRecClass(is_recommend) {
+				if (is_recommend === '推荐') {
+					return { 'layui-btn-normal': true, 'layui-btn-disabled': false }
+				} else {
+					return { 'layui-btn-normal': false, 'layui-btn-disabled': true }
+				}
+			},
+			getStateClass(state) {
+				if (state === '已启用') {
+					return { 'layui-btn-normal': true, 'layui-btn-disabled': false, 'layui-btn-danger': false }
+				} else if (state === '已禁用') {
+					return { 'layui-btn-normal': false, 'layui-btn-disabled': true, 'layui-btn-danger': false }
+				} else {
+					return { 'layui-btn-normal': false, 'layui-btn-disabled': false, 'layui-btn-danger': true }
+				}
+			},
+
+			changeRecommend(article_id, is_recommend, i) {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let msg = is_recommend == '推荐' ? '取消推荐' : '进行推荐';
+					layer.confirm('您确定要' + msg + '吗？', {}, (index) => {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/article/changeRecommend",
+							//数据，json字符串
+							data: { article_id: article_id, is_recommend: is_recommend },
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									this.list[i].is_recommend = is_recommend === '推荐' ? '不推荐' : '推荐';
+									layer.alert(rtn.msg, { icon: 1, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				})
+			},
+			changeState(article_id, state, i) {
+				if ('已删除' === state) {
+					layer.msg('已删除不能更改状态',{time:1500})
+					return false
+				}
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let msg = state == '已启用' ? '禁用' : '启用';
+					layer.confirm('您确定要' + msg + '吗？', {}, (index) => {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/article/changeState",
+							//数据，json字符串
+							data: { article_id: article_id, state: state },
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									this.list[i].state = state === '已启用' ? '已禁用' : '已启用';
+									layer.alert(rtn.msg, { icon: 1, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				})
+			},
+			del(article_id, i) {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					layer.confirm('您确定要删除吗？', {}, (index) => {
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/article/del",
+							//数据，json字符串
+							data: { article_id: article_id },
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									this.list[i].state = '已删除';
+									layer.alert(rtn.msg, { icon: 1, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+										//关闭弹窗
+										layer.close(index1);
+									});
+								}
+								layer.close(index)
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+					});
+				})
+			},
+			showArticle(article_id) {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/article/showArticle",
+						//数据，json字符串
+						data: { article_id: article_id },
+						//请求成功
+						success: (rtn) => {
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index1) {
+									//关闭弹窗
+									layer.close(index1);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								layer.open({
+									type: 1,
+									title: "文章显示",
+									closeBtn: false,
+									shift: 2,
+									area: ['50%', '80%'],
+									shadeClose: true,
+									// btn: ['新增', '取消'],
+									// btnAlign: 'c',
+									content: rtn.data.content
+								});
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index1) {
+									//关闭弹窗
+									layer.close(index1);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+
+				})
+			},
+			edit(article_id) {
+				xadmin.open('编辑文章', '/back/message/articleEdit.html?article_id=' + article_id, 1000, 600)
+			},
+			next() {
+				if (this.page * 1 + 1 <= this.pageAll) {
+					this.page++
+					this.search()
+				} else {
+					layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+				}
+			},
+			prev() {
+				if (this.page * 1 - 1 > 0) {
+					this.page--
+					this.search()
+				} else {
+					layer.msg('没有更多数据！', { icon: 5, time: 1000 });
+				}
+			},
+			goPage(page) {
+				this.page = page
+				this.search()
+			},
+		}
+	})
+</script>
+
+</html>
