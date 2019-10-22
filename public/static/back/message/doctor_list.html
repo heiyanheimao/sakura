@@ -317,7 +317,7 @@
 									parent.location.href = '/back/login.html';
 								});
 							} else if (rtn.code === 200) {
-								layer.msg(rtn.msg,{timeout:1500})
+								layer.msg(rtn.msg,{time:1500})
 								this.list[i].doctor_cover = rtn.data.url
 							} else {
 								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {

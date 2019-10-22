@@ -18,7 +18,7 @@ use think\validate\ValidateRule;
 class Hotel extends Base
 {
     private $level = 1;
-
+    private $sysLevel = 6;
     /**添加酒店
      * @param Request $request
      * @return array
@@ -360,11 +360,16 @@ class Hotel extends Base
         ])->move(config('app.upload_path') . 'cover/');
         if ($info) {
             //保存到数据库
-            if ($model->updateCover($input, '/uploads/cover/' . $info->getSaveName())) {
+            if ($model->updateCover($input, config('app.upload_host') . 'uploads/cover/' . $info->getSaveName())) {
                 if ($coverInfo['data']['hotel_cover'] != '') {
-                    @unlink(config('app.static_path') . $coverInfo['data']['hotel_cover']);
+                    $path = explode('/', $coverInfo['data']['hotel_cover']);
+                    unset($path[0]);
+                    unset($path[1]);
+                    unset($path[2]);
+                    unset($path[3]);
+                    @unlink(config('app.upload_path') . implode('/', $path));
                 }
-                return jsonData(200, '上传成功', ['url' => '/uploads/cover/' . $info->getSaveName()]);
+                return jsonData(200, '上传成功', ['url' => config('app.upload_host') . 'uploads/cover/' . $info->getSaveName()]);
             } else {
                 @unlink(config('app.upload_path') . 'cover/' . $info->getSaveName());
                 return jsonData(403, '上传失败', []);
@@ -488,6 +493,172 @@ class Hotel extends Base
             $input['content'] = filterScript($input['content']);
             $model            = new HotelModel();
             return $model->edit($input);
+        }
+        return jsonData(400, '非法请求');
+    }
+
+    /**更新时间
+     * @param Request $request
+     * @return array
+     */
+    public function setTime(Request $request)
+    {
+        if (self::checkRequest($request)) {
+            //登录态检测
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
+            //权限检测
+            $auth = self::checkAuth($info, $this->sysLevel);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
+            //接收参数
+            $input['order_start'] = $request->post('order_start');//酒店预约开始时间
+            $input['order_end']   = $request->post('order_end');//酒店预约结束时间
+            $input['entry_time']  = $request->post('entry_time');//酒店每日入住退房时间
+            $input['hotel_id']    = $request->post('hotel_id');//酒店id
+            //参数校验
+            $validate = new Validate();
+            $validate->rule([
+                'order_start' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    } elseif (false == validateDate($v, 'H:i')) {
+                        return '不合法的参数';
+                    } else {
+                        return true;
+                    }
+                },
+                'order_end' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    } elseif (false == validateDate($v, 'H:i')) {
+                        return '不合法的参数';
+                    } else {
+                        return true;
+                    }
+                },
+                'entry_time' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    } elseif (false == validateDate($v, 'H:i')) {
+                        return '不合法的参数';
+                    } else {
+                        return true;
+                    }
+                },
+                'hotel_id' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的参数';
+                    }
+                    return true;
+                },
+            ]);
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
+            //逻辑处理
+            $model = new HotelModel();
+            return $model->setTime($input);
+        }
+        return jsonData(400, '非法请求');
+    }
+
+    /**获取列表
+     * @param Request $request
+     * @return array
+     */
+    public function getSysList(Request $request)
+    {
+        if (self::checkRequest($request)) {
+            //登录态检测
+            if (!($info = self::getStatus())) {
+                return jsonData(500, '登录态失效，请重新登录');
+            }
+            //权限检测
+            $auth = self::checkAuth($info, $this->sysLevel);
+            if (200 != $auth['code']) {
+                return $auth;
+            }
+            //接收参数
+            $input['hotel_name']  = $request->post('hotel_name');//酒店名称
+            $input['hotel_phone'] = $request->post('hotel_phone');//酒店电话
+            $input['state']       = $request->post('state');//状态 1启用, 0禁用, -1删除
+            $input['allow_order'] = $request->post('allow_order');//是否允许 1允许, 0禁止
+            $input['page']        = $request->post('page');//分页
+            $input['end']         = $request->post('end');//起始时间
+            $input['start']       = $request->post('start');//结束时间
+            //参数校验
+            $validate = new Validate();
+            $validate->rule([
+                'hotel_name' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数1';
+                    }
+                    return true;
+                },
+                'hotel_phone' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数2';
+                    }
+                    return true;
+                },
+                'state' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数3';
+                    } elseif ('' !== $v && !in_array($v, ['0', '1', '-1'], true)) {
+                        return '不合法的状态';
+                    } else {
+                        return true;
+                    }
+                },
+                'allow_order' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数3';
+                    } elseif ('' !== $v && !in_array($v, ['0', '1'], true)) {
+                        return '不合法的状态';
+                    } else {
+                        return true;
+                    }
+                },
+                'page' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数5';
+                    }
+                    if (false == isPosInt($v)) {
+                        return '不合法的页数';
+                    }
+                    return true;
+                },
+                'start' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数6';
+                    }
+                    if ('' !== $v && false == validateDate($v)) {
+                        return '不合法的参数';
+                    }
+                    return true;
+                },
+                'end' => function ($v) {
+                    if (null === $v) {
+                        return '缺少参数7';
+                    }
+                    if ('' !== $v && false == validateDate($v)) {
+                        return '不合法的参数';
+                    }
+                    return true;
+                },
+            ]);
+            if (!$validate->check($input)) {
+                return jsonData(401, $validate->getError());
+            }
+            //逻辑处理
+            $model = new HotelModel();
+            return $model->getList($input);
         }
         return jsonData(400, '非法请求');
     }

@@ -288,16 +288,94 @@ class Config extends Base
         $info = $file->validate([
             'size' => $config[0]['config_value'] * 1024,
             'ext' => $config[1]['config_value']
-        ])->move(config('app.upload_path') . 'icon/');
+        ])->move(config('app.upload_path') . 'wechat/');
         if ($info) {
             //保存到数据库
-            if ($model->updateIcon($input, '/uploads/icon/' . $info->getSaveName())) {
+            if ($model->updateIcon($input, config('app.upload_host') . 'uploads/wechat/' . $info->getSaveName())) {
                 if ($coverInfo['data']['config_value'] != '') {
-                    @unlink(config('app.static_path') . $coverInfo['data']['config_value']);
+                    $path = explode('/', $coverInfo['data']['config_value']);
+                    unset($path[0]);
+                    unset($path[1]);
+                    unset($path[2]);
+                    unset($path[3]);
+                    @unlink(config('app.upload_path') . implode('/', $path));
                 }
-                return jsonData(200, '上传成功', ['url' => '/uploads/icon/' . $info->getSaveName()]);
+                return jsonData(200, '上传成功', ['url' => config('app.upload_host') . 'uploads/wechat/' . $info->getSaveName()]);
             } else {
-                @unlink(config('app.upload_path') . 'icon/' . $info->getSaveName());
+                @unlink(config('app.upload_path') . 'wechat/' . $info->getSaveName());
+                return jsonData(403, '上传失败', []);
+            }
+        } else {
+            // 上传失败获取错误信息
+            return jsonData(402, $file->getError());
+        }
+    }
+
+    /**上传二维码
+     * @param Request $request
+     * @return array|bool|false|mixed|\think\File
+     */
+    public function uploadCode(Request $request)
+    {
+        //登录态检测
+        if (!($info = self::getStatus())) {
+            return jsonData(500, '登录态失效，请重新登录');
+        }
+        //权限检测
+        $auth = self::checkAuth($info, $this->level);
+        if (200 != $auth['code']) {
+            return $auth;
+        }
+
+        //接收参数
+        $input['config_id'] = $request->post('config_id');//配置id
+        //参数校验
+        $validate = new Validate();
+        $validate->rule([
+            'config_id' => function ($v) {
+                if (null === $v) {
+                    return '缺少参数';
+                }
+                if (false == isPosInt($v)) {
+                    return '不合法的参数';
+                }
+                return true;
+            }
+        ]);
+        if (!$validate->check($input)) {
+            return jsonData(401, $validate->getError());
+        }
+        //获取配置
+        $config = (new ConfigModel())->getConfig(['IMG_MAX', 'IMG_TYPE']);
+        if (false == $config) {
+            return jsonData(401, '未获取到配置项');
+        }
+        //获取文章原始封面
+        $model     = new ConfigModel();
+        $coverInfo = $model->getIcon($input);
+        if (200 != $coverInfo['code']) {
+            return $info;
+        }
+        //上传
+        $file = $request->file('file');
+        $info = $file->validate([
+            'size' => $config[0]['config_value'] * 1024,
+            'ext' => $config[1]['config_value']
+        ])->move(config('app.upload_path') . 'wechat/');
+        if ($info) {
+            //保存到数据库
+            if ($model->updateIcon($input, config('app.upload_host') . 'uploads/wechat/' . $info->getSaveName())) {
+                if ($coverInfo['data']['config_value'] != '') {
+                    $path = explode('/', $coverInfo['data']['config_value']);
+                    unset($path[0]);
+                    unset($path[1]);
+                    unset($path[2]);
+                    unset($path[3]);
+                    @unlink(config('app.upload_path') . implode('/', $path));
+                }
+                return jsonData(200, '上传成功', ['url' => config('app.upload_host') . 'uploads/wechat/' . $info->getSaveName()]);
+            } else {
+                @unlink(config('app.upload_path') . 'wechat/' . $info->getSaveName());
                 return jsonData(403, '上传失败', []);
             }
         } else {

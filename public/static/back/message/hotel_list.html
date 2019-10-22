@@ -296,7 +296,7 @@
 									parent.location.href = '/back/login.html';
 								});
 							} else if (rtn.code === 200) {
-								layer.msg(rtn.msg, { timeout: 1500 })
+								layer.msg(rtn.msg, { time: 1500 })
 								this.list[i].hotel_cover = rtn.data.url
 							} else {
 								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
@@ -373,7 +373,7 @@
 			},
 			changeAllowOrder(i, allow_order) {
 				if (this.list[i].state == '已删除') {
-					layer.msg('已删除的酒店不能修改下单状态!',{icon:5,timeout:1500})
+					layer.msg('已删除的酒店不能修改下单状态!',{icon:5,time:1500})
 					return false
 				}
 				layui.use(['jquery', 'layer'], () => {

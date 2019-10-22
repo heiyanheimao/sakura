@@ -50,41 +50,40 @@
 						class="layui-input"></div>
 				<div class="layui-form-mid layui-word-aux">
 					<span class="x-red">*</span>手机号或者座机号</div>
+			</div>
+			<div class="layui-form-item" id="editer">
+				<label class="layui-form-label">
+					<span class="x-red">*</span>酒店介绍</label>
+				<div class="layui-input-inline" id="editor" style="width: 66%;z-index: 1;">
 				</div>
-				<div class="layui-form-item" id="editer">
-					<label class="layui-form-label">
-						<span class="x-red">*</span>酒店介绍</label>
-					<div class="layui-input-inline" id="editor" style="width: 66%;z-index: 1;">
-					</div>
-					<textarea id="content" name="content" style="display: none;" lay-verify="content"></textarea>
+				<textarea id="content" name="content" style="display: none;" lay-verify="content"></textarea>
+			</div>
+			<div class="layui-form-item">
+				<label for="state" class="layui-form-label">
+					<span class="x-red">*</span>是否启用</label>
+				<div class="layui-input-inline">
+					<select name="state" id="state" lay-filter="required">
+						<option value="1">启用</option>
+						<option value="0">禁用</option>
+					</select></div>
+			</div>
+			<div class="layui-form-item">
+				<label for="allow_order" class="layui-form-label">
+					<span class="x-red">*</span>是否允许下单</label>
+				<div class="layui-input-inline">
+					<select name="allow_order" id="allow_order" lay-filter="required">
+						<option value="1">允许</option>
+						<option value="0">禁止</option>
+					</select></div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">
+					<span class="x-red"></span></label>
+				<div class="layui-input-inline">
+					<button class="layui-btn" lay-filter="add" lay-submit="">增加</button>
 				</div>
-				<div class="layui-form-item">
-					<label for="state" class="layui-form-label">
-						<span class="x-red">*</span>是否启用</label>
-					<div class="layui-input-inline">
-						<select name="state" id="state" lay-filter="required">
-							<option value="1">启用</option>
-							<option value="0">禁用</option>
-						</select></div>
-				</div>
-				<div class="layui-form-item">
-					<label for="allow_order" class="layui-form-label">
-						<span class="x-red">*</span>是否允许下单</label>
-					<div class="layui-input-inline">
-						<select name="allow_order" id="allow_order" lay-filter="required">
-							<option value="1">允许</option>
-							<option value="0">禁止</option>
-						</select></div>
-				</div>
-				<div class="layui-form-item">
-					<label class="layui-form-label">
-						<span class="x-red"></span></label>
-					<div class="layui-input-inline">
-						<button class="layui-btn" lay-filter="add" lay-submit="">增加</button>
-					</div>
-				</div>
+			</div>
 		</form>
-	</div>
 	</div>
 	<script>
 		const vue = new Vue({

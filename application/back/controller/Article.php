@@ -459,9 +459,15 @@ class Article extends Base
         ])->move(config('app.upload_path') . 'cover/');
         if ($info) {
             //保存到数据库
-            if ($model->updateCover($input, '/uploads/cover/' . $info->getSaveName())) {
+            if ($model->updateCover($input, config('app.upload_host') . 'uploads/cover/' . $info->getSaveName())) {
                 if ($coverInfo['data']['article_cover'] != '') {
-                    @unlink(config('app.static_path') . $coverInfo['data']['article_cover']);
+                    //获取路径
+                    $path = explode('/', $coverInfo['data']['article_cover']);
+                    unset($path[0]);
+                    unset($path[1]);
+                    unset($path[2]);
+                    unset($path[3]);
+                    @unlink(config('app.upload_path') . implode('/', $path));
                 }
                 return jsonData(200, '上传成功', []);
             } else {

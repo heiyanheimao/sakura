@@ -318,11 +318,16 @@ class Doctor extends Base
         ])->move(config('app.upload_path') . 'cover/');
         if ($info) {
             //保存到数据库
-            if ($model->updateCover($input, '/uploads/cover/' . $info->getSaveName())) {
+            if ($model->updateCover($input, config('app.upload_host') . 'uploads/cover/' . $info->getSaveName())) {
                 if ($coverInfo['data']['doctor_cover'] != '') {
-                    @unlink(config('app.static_path') . $coverInfo['data']['doctor_cover']);
+                    $path = explode('/', $coverInfo['data']['doctor_cover']);
+                    unset($path[0]);
+                    unset($path[1]);
+                    unset($path[2]);
+                    unset($path[3]);
+                    @unlink(config('app.upload_path') . implode('/', $path));
                 }
-                return jsonData(200, '上传成功', ['url' => '/uploads/cover/' . $info->getSaveName()]);
+                return jsonData(200, '上传成功', ['url' => config('app.upload_host') . 'uploads/cover/' . $info->getSaveName()]);
             } else {
                 @unlink(config('app.upload_path') . 'cover/' . $info->getSaveName());
                 return jsonData(403, '上传失败', []);

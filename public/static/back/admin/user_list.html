@@ -129,6 +129,9 @@
 										<a title="信息补充" @click="edit(item.user_id)" href="javascript:;">
 											<i class="layui-icon">&#xe642;</i>
 										</a>
+										<a title="服务余量" @click="changeProduct(item.user_id)" href="javascript:;">
+											<i class="layui-icon">&#xe653;</i>
+										</a>
 										<a title="删除" @click="changeState(index,-1)" href="javascript:;">
 											<i class="layui-icon">&#xe640;</i>
 										</a>
@@ -170,13 +173,54 @@
 									<td>{{item.checkin_phone}}</td>
 									<td>{{item.checkin_time}}</td>
 									<td>{{item.checkin_type}}</td>
-									<td>{{item.state}}</td>
+									<td :style="setStyle(item.state)">{{item.state}}</td>
 									<td>{{item.cancel_reason}}</td>
 								</tr>
 							</tbody>
 						</table>
 					</div>
 
+					<div class="layui-row" id="hiddenForm" style="display: none;">
+						<div class="layui-card-body ">
+							<form class="layui-form layui-col-space5">
+								<div class="layui-inline layui-show-xs-block">
+									<input type="text" name="package_name" v-model.lazy="package_name" placeholder="请输入产品包名称"
+										autocomplete="off" class="layui-input">
+								</div>
+								<div class="layui-inline layui-show-xs-block">
+									<input type="text" name="product_name" v-model.lazy="product_name" placeholder="请输入产品名称"
+										autocomplete="off" class="layui-input">
+								</div>
+								<div class="layui-inline layui-show-xs-block">
+									<button class="layui-btn" type="button" @click.stop="hiddenSearch()"><i
+											class="layui-icon">&#xe615;</i></button>
+								</div>
+							</form>
+						</div>
+						<table class="layui-table layui-form">
+							<thead>
+								<tr class='header'>
+									<th>产品包</th>
+									<th>产品名称</th>
+									<th>产品类型</th>
+									<th>产品总量</th>
+									<th>产品剩余</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-cloak v-for="(item,index) in hidden_list"
+									:key="user_id + '_' + item.package_id + '_' + item.product_id">
+									<td>{{item.package_name}}</td>
+									<td>{{item.product_name}}</td>
+									<td>{{item.product_type === 1? '次数卡' :'储值卡'}}</td>
+									<td>{{item.product_type === 1? item.product_num : '¥' + item.product_money}}</td>
+									<td>{{item.product_type === 1? item.surplus_num : '¥' + item.surplus_money}}</td>
+									<td><span class="layui-btn" @click="spend(index)">消费</span></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -198,7 +242,13 @@
 			list: [],
 			page: 1,
 			pageAll: 1,
-			checkins: []
+			checkins: [],
+
+			user_id: 0,
+			product_name: '',
+			package_name: '',
+			hidden_list: [],
+			send_data: {}
 		},
 		created: function () {
 			layui.use(['laydate', 'form', 'layer', 'jquery'], () => {
@@ -232,13 +282,223 @@
 			})
 		},
 		updated: function () {
-			//重新渲染表格
-			++this.count
 			layui.use(['form', 'upload'], () => {
 				layui.form.render();
 			})
 		},
 		methods: {
+			setStyle(state) {
+				switch (state) {
+					case '已确认':
+						return 'color:#1E9FFF';
+						break;
+					case '已取消':
+						return 'color:#FF5722';
+						break;
+					case '未确认':
+						return 'color:#c2c2c2';
+						break;
+				}
+			},
+			spend(i, e) {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					layer.prompt({
+						formType: 0,
+						value: '0',
+						title: '请输入此次消费金额或者次数',
+						area: ['800px', '350px'] //自定义文本域宽高
+					},  (value, index, elem) => {
+						if (parseFloat(value) <= 0 || isNaN(parseFloat(value))) {
+							layer.msg('请给一个正数', { time: 2000 })
+							return false
+						}
+						$.ajax({
+							//请求方式
+							type: "POST",
+							//请求的媒体类型
+							dataType: "JSON",
+							//请求地址
+							url: "/back/UserProduct/spend",
+							//数据，json字符串
+							data: { product_id: this.hidden_list[i].product_id,order_id: this.hidden_list[i].order_id, package_id: this.hidden_list[i].package_id, user_id: this.hidden_list[i].user_id,spend:value},
+							// async: false,
+							//请求成功
+							success: (rtn) => {
+								if (rtn.code === 500) {
+									layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+										parent.location.href = '/back/login.html';
+									});
+								} else if (rtn.code === 200) {
+									if (this.hidden_list[i].product_type == 1) {
+										this.hidden_list[i].surplus_num -= value
+									} else {
+										this.hidden_list[i].surplus_money = (this.hidden_list[i].surplus_money-value).toFixed(2)
+									}
+									
+								} else {
+									layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										//关闭弹窗
+										layer.close(index);
+									});
+								}
+							},
+							//请求失败，包含具体的错误信息
+							error: function (e) {
+								console.log(e.status);
+								console.log(e.responseText);
+							}
+						});
+						layer.close(index);
+					});
+				});
+			},
+			hiddenSearch() {
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/UserProduct/getProduct",
+						//数据，json字符串
+						data: { product_name: this.product_name, package_name: this.package_name, user_id: this.user_id },
+						// async: false,
+						//请求成功
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								this.hidden_list = rtn.data.list
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+				});
+			},
+			changeProduct(user_id) {
+				this.user_id = user_id
+				layui.use(['jquery', 'layer'], () => {
+					let $ = layui.jquery
+					let layer = layui.layer
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					$.ajax({
+						//请求方式
+						type: "POST",
+						//请求的媒体类型
+						dataType: "JSON",
+						//请求地址
+						url: "/back/UserProduct/getProduct",
+						//数据，json字符串
+						data: { product_name: this.product_name, package_name: this.package_name, user_id: this.user_id },
+						// async: false,
+						//请求成功
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								this.hidden_list = rtn.data.list
+								layer.open({
+									type: 1,
+									title: "服务余量",
+									closeBtn: false,
+									shift: 2,
+									area: ['600px', '600px'],
+									shadeClose: true,
+									// btn: ['确定', '取消'],
+									// btnAlign: 'c',
+									content: $('#hiddenForm'),
+									yes: (index, layero) => {
+										//do something
+										// layer.close(index); //如果设定了yes回调，需进行手工关闭
+										// $.ajax({
+										// 	//请求方式
+										// 	type: "POST",
+										// 	//请求的媒体类型
+										// 	dataType: "JSON",
+										// 	//请求地址
+										// 	url: "/back/userproduct/spend",
+										// 	//数据，json字符串
+										// 	data: JSON.parse(JSON.stringify(this.send_data)),
+										// 	success: (rtn) => {
+										// 		if (rtn.code === 500) {
+										// 			layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+										// 				//关闭弹窗
+										// 				layer.close(index);
+										// 				parent.location.href = '/back/login.html';
+										// 			});
+										// 		} else if (rtn.code === 200) {
+										// 			layer.close(index)
+										// 			layer.msg(rtn.msg,{time:1000})
+										// 			this.list[i].order_start = this.order_start
+										// 			this.list[i].order_end = this.order_end
+										// 			this.list[i].entry_time = this.entry_time
+										// 		} else {
+										// 			layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+										// 				//关闭弹窗
+										// 				layer.close(index);
+										// 			});
+										// 		}
+										// 	},
+										// 	//请求失败，包含具体的错误信息
+										// 	error: function (e) {
+										// 		console.log(e.status);
+										// 		console.log(e.responseText);
+										// 	}
+										// });
+									},
+									end: () => {
+										this.hidden_list = []
+										this.send_data = {}
+										this.user_id = 0
+										this.package_name = ''
+										this.product_name = ''
+									}
+								});
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						//请求失败，包含具体的错误信息
+						error: function (e) {
+							console.log(e.status);
+							console.log(e.responseText);
+						}
+					});
+				});
+			},
 			btnSearch() {
 				this.page = 1
 				this.search()
@@ -367,7 +627,7 @@
 							//请求地址
 							url: "/back/user/editUserName",
 							//数据，json字符串
-							data: { user_id: this.list[i].user_id, user_name:value},
+							data: { user_id: this.list[i].user_id, user_name: value },
 							//请求成功
 							success: (rtn) => {
 								if (rtn.code === 500) {
@@ -379,9 +639,9 @@
 								} else if (rtn.code === 200) {
 									this.list[i].user_name = value;
 									layer.close(index);
-									layer.msg(rtn.msg,{timeout:2000})
+									layer.msg(rtn.msg, { time: 2000 })
 								} else {
-									layer.msg(rtn.msg,{timeout:2000})
+									layer.msg(rtn.msg, { time: 2000 })
 								}
 							},
 							//请求失败，包含具体的错误信息
@@ -405,7 +665,7 @@
 						// area: ['800px', '350px'] //自定义文本域宽高
 					}, (value, index, elem) => {
 						if (value.search(/^1\d{10}$/) != 0) {
-							layer.msg('请输一个合格的手机号',{timeout:2000})
+							layer.msg('请输一个合格的手机号', { time: 2000 })
 							return false
 						}
 						$.ajax({
@@ -416,7 +676,7 @@
 							//请求地址
 							url: "/back/user/editUserPhone",
 							//数据，json字符串
-							data: { user_id: this.list[i].user_id, user_phone:value},
+							data: { user_id: this.list[i].user_id, user_phone: value },
 							//请求成功
 							success: (rtn) => {
 								if (rtn.code === 500) {
@@ -428,9 +688,9 @@
 								} else if (rtn.code === 200) {
 									this.list[i].user_phone = value;
 									layer.close(index);
-									layer.msg(rtn.msg,{timeout:2000})
+									layer.msg(rtn.msg, { time: 2000 })
 								} else {
-									layer.msg(rtn.msg,{timeout:2000})
+									layer.msg(rtn.msg, { time: 2000 })
 								}
 							},
 							//请求失败，包含具体的错误信息

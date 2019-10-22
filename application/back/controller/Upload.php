@@ -23,7 +23,7 @@ class Upload extends Base
         foreach ($request->file() as $file) {
             $info = $file->validate(['size'=>$config[0]['config_value'] *1024,'ext'=>$config[1]['config_value']])->move( config('app.upload_path'));
             if($info){
-                $data[] = '/uploads/'.$info->getSaveName();
+                $data[] = config('app.upload_host') . 'uploads/'.$info->getSaveName();
             }else{
                 // 上传失败获取错误信息
                 return json_encode(['errno' => 1, 'msg' =>$file->getError()]);

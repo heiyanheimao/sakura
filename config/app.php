@@ -152,6 +152,6 @@ return [
         6 => '系统管理员',
         9 => '超级管理员'
     ],
-    'upload_path' => Env::get('ROOT_PATH') . 'public/static/uploads/',
-    'static_path' => Env::get('ROOT_PATH') . 'public/static/',
+    'upload_path' => '/home/uploads/',
+    'upload_host' => 'http://192.168.20.200/'
 ];

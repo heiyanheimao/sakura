@@ -75,7 +75,7 @@
 								<tr v-cloak v-for="(item,index) in list" :key="item.config_id">
 									<td>{{item.config_id}}</td>
 									<td>{{item.config_name}}</td>
-									<td v-if="item.config_name != 'system_icon'">{{item.config_value}}</td>
+									<td v-if="item.config_name != 'system_icon' && item.config_name != 'system_wechat'">{{item.config_value}}</td>
 									<td v-else><img :src="item.config_value" alt="" style="width: 50px;height: 50px;"></td>
 									<td>{{item.config_desc}}</td>
 									<td class="td-status" v-if="item.state=='已启用'">
@@ -84,17 +84,26 @@
 									<td class="td-status" v-else-if="item.state=='已禁用'">
 										<span class="layui-btn layui-btn-mini layui-btn-disabled"
 											@click.stop="changeState(index,1)">{{item.state}}</span></td>
-									<td class="td-manage" v-if="item.config_name !='system_icon'">
-										<span class="layui-btn layui-btn-mini" @click.stop="editDesc(index)">编辑描述</span>
-										<span class="layui-btn layui-btn-mini" @click.stop="editValue(index)">编辑配置值</span>
-									</td>
-									<td class="td-manage" v-else>
+
+									<td class="td-manage" v-if="item.config_name =='system_icon'">
 										<span class="layui-btn layui-btn-mini" @click.stop="editDesc(index)">编辑描述</span>
 										<input type="file" :name="'icon_' + item.config_id" :id="'icon_' + item.config_id"
 											style="display: none;" @change="uploadIcon(index,$event)">
 										<label :for="'icon_' + item.config_id" style="margin-left: 10px;">
-											<span class="layui-btn layui-btn-mini">上传图片</span>
+											<span class="layui-btn layui-btn-mini">上传icon</span>
 										</label>
+									</td>
+									<td class="td-manage" v-else-if="item.config_name =='system_wechat'">
+										<span class="layui-btn layui-btn-mini" @click.stop="editDesc(index)">编辑描述</span>
+										<input type="file" :name="'icon_' + item.config_id" :id="'icon_' + item.config_id"
+											style="display: none;" @change="uploadCode(index,$event)">
+										<label :for="'icon_' + item.config_id" style="margin-left: 10px;">
+											<span class="layui-btn layui-btn-mini">上传二维码</span>
+										</label>
+									</td>
+									<td class="td-manage" v-else>
+										<span class="layui-btn layui-btn-mini" @click.stop="editDesc(index)">编辑描述</span>
+										<span class="layui-btn layui-btn-mini" @click.stop="editValue(index)">编辑配置值</span>
 									</td>
 								</tr>
 							</tbody>
@@ -288,9 +297,9 @@
 								} else if (rtn.code === 200) {
 									this.list[i].config_desc = value;
 									layer.close(index);
-									layer.msg(rtn.msg, { timeout: 2000 })
+									layer.msg(rtn.msg, { time: 2000 })
 								} else {
-									layer.msg(rtn.msg, { timeout: 2000 })
+									layer.msg(rtn.msg, { time: 2000 })
 								}
 							},
 							//请求失败，包含具体的错误信息
@@ -317,7 +326,7 @@
 						if (this.list[i].config_name == 'health_start_time' || this.list[i].config_name == 'health_end_time' || this.list[i].config_name == 'green_start_time' || this.list[i].config_name == 'green_end_time') {
 							//检测是否满足格式
 							if (value.search(/^(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d$/) != 0) {
-								layer.msg('请输入一个合格的时间',{timeout:2000})
+								layer.msg('请输入一个合格的时间', { time: 2000 })
 								return false
 							}
 							type = 'time'
@@ -330,7 +339,7 @@
 							//请求地址
 							url: "/back/config/editValue",
 							//数据，json字符串
-							data: { config_id: this.list[i].config_id, config_value: value,type:type },
+							data: { config_id: this.list[i].config_id, config_value: value, type: type },
 							//请求成功
 							success: (rtn) => {
 								if (rtn.code === 500) {
@@ -342,9 +351,9 @@
 								} else if (rtn.code === 200) {
 									this.list[i].config_value = value;
 									layer.close(index);
-									layer.msg(rtn.msg, { timeout: 2000 })
+									layer.msg(rtn.msg, { time: 2000 })
 								} else {
-									layer.msg(rtn.msg, { timeout: 2000 })
+									layer.msg(rtn.msg, { time: 2000 })
 								}
 							},
 							//请求失败，包含具体的错误信息
@@ -381,7 +390,46 @@
 									parent.location.href = '/back/login.html';
 								});
 							} else if (rtn.code === 200) {
-								layer.msg(rtn.msg, { timeout: 1500 })
+								layer.msg(rtn.msg, { time: 1500 })
+								this.list[i].config_value = rtn.data.url
+							} else {
+								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+								});
+							}
+						},
+						error: function (error) { }
+					});
+				})
+
+			},
+			uploadCode(i, e) {
+				layui.use(['jquery'], () => {
+					let loadIndex = layer.load(2, {
+						// shade: [0.3, '#000'] //0.1透明度的白色背景
+					});
+					let file = e.target.files;
+					let formData = new window.FormData();
+					formData.append('file', file[0]);
+					formData.append('config_id', this.list[i].config_id);
+					$.ajax({
+						url: '/back/config/uploadCode',
+						type: "post",
+						dataType: "JSON",
+						data: formData,
+						processData: false,
+						contentType: false,
+						success: (rtn) => {
+							layer.close(loadIndex)
+							if (rtn.code === 500) {
+								layer.alert(rtn.msg, { icon: 2, closeBtn: 0 }, function (index) {
+									//关闭弹窗
+									layer.close(index);
+									parent.location.href = '/back/login.html';
+								});
+							} else if (rtn.code === 200) {
+								layer.msg(rtn.msg, { time: 1500 })
 								this.list[i].config_value = rtn.data.url
 							} else {
 								layer.alert(rtn.msg, { icon: 0, closeBtn: 0 }, function (index) {

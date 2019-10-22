@@ -234,7 +234,7 @@ class HotelModel
             $info = Db::table($this->table)->field('hotel_name,hotel_address,content,hotel_phone')
                 ->where('hotel_id', $input['hotel_id'])->find();
             if (null == $info) {
-                return jsonData(401, '未找到当前医生信息');
+                return jsonData(401, '未找到当前信息');
             }
             return jsonData(200, '获取成功', $info);
         } catch (\Exception $e) {
@@ -259,6 +259,35 @@ class HotelModel
             return jsonData(400, '更新酒店信息失败');
         } catch (\Exception $e) {
             AdminLogModel::writeLog($guy, '更新酒店信息', json_encode($input), '服务内部错误~');
+            return jsonData(301, '服务内部错误~');
+        }
+    }
+
+    /**更新时间
+     * @param $input
+     * @return array
+     */
+    public function setTime($input)
+    {
+        $guy = Session::get('info.admin_account');
+        try {
+            $info = Db::table($this->table)->field('order_start,order_end,entry_time')
+                ->where('hotel_id', $input['hotel_id'])->find();
+            if (null == $info) {
+                return jsonData(401, '未找到当前信息');
+            }
+            if ($info['order_start'] == $input['order_start'] && $info['order_end'] == $input['order_end'] && $info['entry_time'] == $input['entry_time']) {
+                return jsonData(402, '数据没有任何更新!');
+            }
+            $rtn = Db::table($this->table)->update($input);
+            if ($rtn == 1) {
+                AdminLogModel::writeLog($guy, '更新时间', json_encode($input), '更新成功');
+                return jsonData(200, '更新时间成功');
+            }
+            AdminLogModel::writeLog($guy, '更新时间', json_encode($input), '更新失败');
+            return jsonData(400, '更新时间失败');
+        } catch (\Exception $e) {
+            AdminLogModel::writeLog($guy, '更新时间', json_encode($input), '服务内部错误~');
             return jsonData(301, '服务内部错误~');
         }
     }
